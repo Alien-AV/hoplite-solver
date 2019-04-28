@@ -3,6 +3,9 @@ class Coord
   def initialize(x,y)
     @x,@y = x,y
   end
+  def to_s
+    "[#{x},#{y}]"
+  end
 end
 
 class MovingObject
@@ -10,6 +13,10 @@ class MovingObject
   def initialize(type)
     @type = type
     @coord = nil
+  end
+
+  def to_s
+    "MovingObject"
   end
 
   WARRIOR_TYPE=4
@@ -46,7 +53,12 @@ end
 
 class Step < PotentialMove
   def self.getPossibleMoves(position)
-    position.playerNeighbors().select{| hex | hex.type == FLOOR_TYPE } # also touching the altar or exit is an option, maybe it's not "step" though
+    # also touching the altar or exit is an option, maybe it's not "step" though
+    position.playerNeighbors().select{| hex | hex.type == Hex::FLOOR_TYPE && hex.contained_object == nil}.map do | possible_player_next_hex |
+      new_pos = position.clone
+      new_pos.move_moving_object(new_pos.player, possible_player_next_hex.coord)
+      new_pos
+    end
   end
 end
 
@@ -62,12 +74,20 @@ class Position
     place_player(@player_location)
   end
 
+  def clone
+    Marshal.load(Marshal.dump(self))
+  end
+
   def move_moving_object(moving_object, new_coord)
     if moving_object.coord != nil
       @hexArray[moving_object.coord.x][moving_object.coord.y] = nil
     end
     moving_object.coord = new_coord
-    @hexArray[moving_object.coord.x][moving_object.coord.y] = moving_object
+    @hexArray[moving_object.coord.x][moving_object.coord.y].contained_object = moving_object
+  end
+
+  def player
+    @hexArray[@player_location.x][@player_location.y].contained_object
   end
 
   def place_player(coord)
@@ -88,20 +108,22 @@ class Position
 
   def neighbors(coords)
     x,y = coords.x, coords.y
-    neighbors = [[x, y+1], [x, y-1]]
+    neighbor_coords = [Coord.new(x, y+1), Coord.new(x, y-1)]
     [-1,1].each do | x_off |
       neighbor_x = x + x_off
       if neighbor_x.between?(0, @hexArray.size-1)
         if(@hexArray[neighbor_x].size > @hexArray[x].size)
-          neighbors += [[neighbor_x, y], [neighbor_x, y+1]]
+          neighbor_coords += [Coord.new(neighbor_x, y), Coord.new(neighbor_x, y+1)]
         else
-          neighbors += [[neighbor_x, y-1], [neighbor_x, y]]
+          neighbor_coords += [Coord.new(neighbor_x, y-1), Coord.new(neighbor_x, y)]
         end
       end
     end
 
-    neighbors.select do | x, y |
-      x >= 0 && x < @hexArray.size && y >= 0 && y <= @hexArray[x].size
+    neighbor_coords.select do | coord |
+      coord.x >= 0 && coord.x < @hexArray.size && coord.y >= 0 && coord.y <= @hexArray[coord.x].size
+    end.map do | neighbor_coord |
+      @hexArray[neighbor_coord.x][neighbor_coord.y]
     end
   end
 
@@ -115,8 +137,14 @@ class Position
 end
 
 startingPosition = Position.new
-puts startingPosition
-puts startingPosition.generatePotentialPositions
+# puts startingPosition
+# puts
+# puts startingPosition.generatePotentialPositions
+# puts
+Step.getPossibleMoves(startingPosition).each do | possible_pos |
+  puts possible_pos
+  puts; puts
+end
 
 
 def notMiniMax(startingPosition, depth)
