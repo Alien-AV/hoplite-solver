@@ -1,4 +1,4 @@
-require_relative 'board_state.rb'
+require_relative 'board-state.rb'
 require "test/unit"
 
 class CalculateSolution
