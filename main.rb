@@ -184,7 +184,7 @@ class Position
     end
 
     neighbor_coords.select do | coord |
-      coord.x >= 0 && coord.x < @hexArray.size && coord.y >= 0 && coord.y <= @hexArray[coord.x].size
+      coord.x >= 0 && coord.x < @hexArray.size && coord.y >= 0 && coord.y < @hexArray[coord.x].size
     end.map do | neighbor_coord |
       get_hex_at(neighbor_coord)
     end
