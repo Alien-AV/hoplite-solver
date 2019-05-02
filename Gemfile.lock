@@ -1,13 +1,17 @@
 GEM
   remote: https://rubygems.org/
   specs:
+    power_assert (1.1.4)
     ruby2d (0.9.2)
+    test-unit (3.3.2)
+      power_assert
 
 PLATFORMS
   x64-mingw32
 
 DEPENDENCIES
   ruby2d
+  test-unit
 
 BUNDLED WITH
    1.17.2
